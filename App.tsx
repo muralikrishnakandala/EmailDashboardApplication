@@ -1,118 +1,67 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer, useNavigation, NavigationProp } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Login from './src/screens/Login';
+import Dashboard from './src/screens/Dasboard';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { MMKV } from 'react-native-mmkv';
+import { ActivityIndicator, View } from 'react-native';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+// Initialize MMKV storage
+export const MMKVstorage = new MMKV();
+export type RootStackParamList = {
+  Login: undefined; 
+  Dashboard: undefined
+};
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+function App() {
+  const [initialRoute, setInitialRoute] = useState<string | null>(null); // Start with null
+  const { handleCredentials } = useAuth();
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  useEffect(() => {
+    const getStoredCredentials = () => {
+      try {
+        const getEmail = MMKVstorage.getString('email');
+        const getPassword = MMKVstorage.getString('password');
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+        if (getEmail && getPassword) {
+          console.log('Logged-in User:', getEmail, getPassword);
+          handleCredentials(getEmail, 'email');
+          handleCredentials(getPassword, 'password');
+          setInitialRoute('Dashboard');
+          
+        } else {
+          setInitialRoute('Login');
+        }
+      } catch (error) {
+        console.error('Error fetching credentials:', error);
+        setInitialRoute('Login'); // Fallback in case of error
+      }
+    };
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+    getStoredCredentials();
+  }, [handleCredentials]);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  // Show a loader until `initialRoute` is determined
+  if (initialRoute === null) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <NavigationContainer>
+    <AuthProvider>
+        <Stack.Navigator initialRouteName={initialRoute === "Dashboard" ? "Dashboard" : "Login"}>
+          <Stack.Screen name="Dashboard" component={Dashboard} />
+          <Stack.Screen name="Login" component={Login} />
+        </Stack.Navigator>
+    </AuthProvider>
+      </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
