@@ -62,4 +62,10 @@ If everything is set up _correctly_, you should see your new app running in your
 
 This is one way to run your app — you can also run it directly from within Android Studio
 
+# References
+
+## You can find the project files and resources below:
+- APK File: [Download APK](https://drive.google.com/file/d/1Hx6_UH1K3Cta6BirZ4T6m1EKbDv9ndVV/view?usp=sharing)
+- Documentation: [View Documentation](https://drive.google.com/file/d/1rAAL3-NnxOE5cvD5ft-s_HQkOvZGs2Vm/view?usp=sharing)
+- Screen Recording: [Watch Recording](https://drive.google.com/file/d/1ZGPJPZz34DYYLLeNgiW36FCe0UB_S6vM/view?usp=sharing)
 
