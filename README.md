@@ -17,6 +17,7 @@ This is a React Native application that allows users to view their email count b
 - IMAP Protocol
 - React Navigation
 - React Native Cookies
+- React Native WebView
 - React Native Carousel
 - React Native Reanimated
 - React Native Gesture Handler
