@@ -1,19 +1,19 @@
-import React, { useState, useRef, FC } from "react";
-import { StyleSheet, View, ActivityIndicator, Alert } from "react-native";
+import React, { useState, FC, useEffect } from "react";
+import { StyleSheet, View, ToastAndroid } from "react-native";
 import { WebView } from "react-native-webview";
 import LoginSuccessModal from "../components/LoginSuccessModal";
 import { useAuth } from "../context/AuthContext";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
+import { AppPasswordScript, EnableTwoFAGuideScript, GetEmailAddressScript, PasswordMessage, TwoFANotVerifiedMessage, TwoFANotVerifiedScript, TwoFAVerifiedMessage } from "../data/data";
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 const Login:FC<Props> = ({navigation}) => {
 
-  
-  // const webViewRef = useRef<WebView>(null);
-  const {handleCredentials, webViewRef} = useAuth()
+  const {handleCredentials, webViewRef, login} = useAuth()
   const [hasNavigated, setHasNavigated] = useState(false);
+  const [intial2FAVerification, setIntial2FAVerification] = useState(false);
   const [modal, setModal] = useState({ visible:false, title:"", message:"", type:"" });
 
   const resetModalState = () => {
@@ -22,178 +22,177 @@ const Login:FC<Props> = ({navigation}) => {
 
   const handleProceedBtn = (type:string) => {
     resetModalState();
-    if(type === "2FA_CHECK") {
-        if(webViewRef.current) {
+    if (type === '2FA_VERIFIED') {
+      if (webViewRef.current) {
         webViewRef.current.injectJavaScript(`window.location.href = 'https://myaccount.google.com/apppasswords';`);
       }
-    }
-    else if(type === "PASSWORD"){
-      navigation.navigate("Dashboard")
+    } else if (type === '2FA_NOT_VERIFIED') {
+      if (webViewRef.current) {
+        webViewRef.current.injectJavaScript(TwoFANotVerifiedScript);
       }
+    } else if (type === 'PASSWORD') {
+      navigation.navigate('Dashboard');
+    }
   }
 
-  // Handle navigation state changes
+  
   const handleWebViewStateChange = (newNavState: any) => {
     const { url } = newNavState;
-    console.log("Navigated URL:", url);
+ 
 
+    
     if (url.includes("myaccount.google.com") && !hasNavigated) {
       if (webViewRef.current) {
         webViewRef.current.injectJavaScript(`
           window.location.href = 'https://myaccount.google.com/security/signinoptions/two-step-verification';
         `);
         
-        setHasNavigated(true); // Prevent repeated navigation
-  
+        setHasNavigated(true);
+        setIntial2FAVerification(true)
       }
-    } else if (url.includes("signinoptions/twosv")) {
+    } 
+    
+    else if (url.includes("signinoptions/twosv")) {
       if (webViewRef.current) {
         webViewRef.current.injectJavaScript(`
           (function() {
-            // Use a flag to ensure this script runs only once
+           
             if (window.hasExecutedScript) return;
             window.hasExecutedScript = true;
 
-            // Function to check 2FA status
+           
             function check2FAStatus() {
               const is2FAPage = window.location.href.includes('signinoptions/twosv');
               const enabled2FAIndicator = document.body.innerText.includes("Turn off 2-Step Verification");
-
-              // Send the status back to React Native
-              window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: '2FA_CHECK',
-                is2FAPage: is2FAPage,
-                is2FAEnabled: enabled2FAIndicator
-              }));
-            }
-
-            // Execute check2FAStatus after the page is fully loaded
-            if (document.readyState === 'complete') {
-              check2FAStatus();
-            } else {
-              window.addEventListener('load', check2FAStatus, { once: true });
-            }
-          })();
-        `);
-      }
-
-    } else if(url.includes("/apppasswords")) {
-      if(webViewRef.current){
-        webViewRef.current.injectJavaScript(`
-           window.onload = function() {
+              const buttonContainer = document.querySelector('.xIcqYe');
               
-           const appName = document.querySelector('.skQ8Ge')
-            
-           if (appName) {
-                appName.style.display = 'block';
-                appName.style.border = '2px solid #f0ad4e'; // Adjust border as needed
-                const tooltip = document.createElement('div');
-                tooltip.textContent = "Click on secuity to access 2-Factor Authentication";
-                tooltip.style.backgroundColor = '#f8d7da';
-                tooltip.style.color = '#721c24';
-                tooltip.style.padding = '8px';
-                tooltip.style.borderRadius = '5px';
-                tooltip.style.fontSize = '14px';
-                tooltip.style.zIndex = '9999';
-                tooltip.style.width = 'fit-content';
-                tooltip.style.maxWidth = '320px'; // Set a maximum width to prevent overflow
-                const parentElement = document.querySelector(".skQ8Ge") || document.body;
-        
-            if(parentElement) {
-              parentElement.appendChild(tooltip);
-            }
+              if (buttonContainer && ${!intial2FAVerification}) {
+                      buttonContainer.style.display = 'block';
+                      buttonContainer.style.border = '2px solid #f0ad4e';
 
-            setTimeout(() => {
-            appName.style.border = 'none';
-              parentElement.removeChild(tooltip);
-            }, 5000); 
-      
-        }
-            
-        }
+                       const tooltip = document.createElement('div');
 
-       function handleModalVisibility() {
-        
+                        tooltip.textContent = "Click here to enable 2-Step Verification";
+                        tooltip.style.backgroundColor = '#f8d7da';
+                        tooltip.style.color = '#721c24';
+                        tooltip.style.padding = '8px';
+                        tooltip.style.borderRadius = '5px';
+                        tooltip.style.fontSize = '14px';
+                        tooltip.style.zIndex = '9999';
+                        tooltip.style.width = 'fit-content';
+                        tooltip.style.maxWidth = '320px';
 
-            const modalElement = document.querySelector('.XfTrZ')
-                if (modalElement && modalElement.style.display !== 'none') { 
-                  const getPassword = document.querySelector(".XfTrZ");
-                    if (getPassword) {
-                      getPassword.style.border = '5px solid #f0ad4e'
-                        window.ReactNativeWebView.postMessage(JSON.stringify({type: 'APP_PASSWORD',password: getPassword.outerText.split(' ').join('')}))
+                        buttonContainer.appendChild(tooltip);          
+
+                      setTimeout(() => {
+
+                      buttonContainer.style.border = 'none';
+                        buttonContainer.removeChild(tooltip);
+
+                      }, 5000); 
                     }
-               }
-      }
+            
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                      type: '2FA_CHECK',
+                      is2FAPage: is2FAPage,
+                      is2FAEnabled: enabled2FAIndicator,
+                      isForInitialVerification:${intial2FAVerification}
+                    }));
+                  }
 
-  // Check for modal initially (optional)
-  handleModalVisibility();
+            
+           
+                    if (document.readyState === 'complete') {
+                      check2FAStatus();
+                    } else {
+                      window.addEventListener('load', check2FAStatus, { once: true });
+                    }     
+                  })();
+          
 
-  // Add event listener for modal visibility changes
-  document.addEventListener('visibilitychange', handleModalVisibility);
-      
-    ;`)
-      }
-    } else if (url.includes("/signin") && url.includes("/challenge")) {
-      if (webViewRef.current) {
-        console.log("vvvvv")
-        webViewRef.current.injectJavaScript(`
-          (function() { // Important: Use an IIFE
-        
-            function getEmailHandler() {
-              const getEmail = document.querySelector(".SOeSgb");
-              if (getEmail) {
-                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'APP_EMAIL', email: getEmail.textContent.trim() }));
-              }
-            }        
-            setTimeout(getEmailHandler, 1000);
-        
-          })(); // Close the IIFE
+              (function(){
+                const twoFaButtonEle = document.querySelector('.UywwFc-LgbsSe.UywwFc-LgbsSe-OWXEXe-dgl2Hf.wMI9H')
+                
+                if (twoFaButtonEle) {
+                      twoFaButtonEle.addEventListener('click', function() {
+                
+                              if(twoFaButtonEle.textContent === "Done"){
+                            
+                                  window.ReactNativeWebView.postMessage(JSON.stringify({
+                                      type: '2FA_CHECK',
+                                      is2FAPage: true,
+                                      is2FAEnabled: true,
+                                  isForInitialVerification:true
+                                }));  
+                              };
+                          })
+                      }
+              })()
         `);
+      }
+
+    } 
+    
+    else if(url.includes("/apppasswords")) {
+      if(webViewRef.current){
+        webViewRef.current.injectJavaScript(AppPasswordScript)
+      }
+    }
+
+    else if (url.includes("/signin") && url.includes("/challenge")) {
+      if (webViewRef.current) {
+        webViewRef.current.injectJavaScript(GetEmailAddressScript);
+      }
+    }
+
+    else if(url.includes("/security")) {
+      if(webViewRef.current) {
+        setIntial2FAVerification(false)
+        webViewRef.current?.injectJavaScript(EnableTwoFAGuideScript);
       }
     }
   };
 
-  // Handle messages sent from the WebView
   const handleMessage = (event: any) => {
     try {
-      const data = JSON.parse(event.nativeEvent.data);
-      
-
+      const data = JSON.parse(event.nativeEvent.data);    
       switch(data.type) {
         case "2FA_CHECK":
-          if(webViewRef.current){
-            webViewRef.current.injectJavaScript(` window.location.href = 'https://myaccount.google.com';`);
-          if (data.is2FAEnabled ) {
-              console.log(data.is2FAEnabled, "On")
-              setModal({...modal, visible: true, type:"2FA_CHECK", title:"Login and 2FA Verified", message:"Login successful! Two-factor authentication has been verified. \n Click Proceed to generate your app password."});
+          if(webViewRef.current && data.isForInitialVerification){
+            webViewRef.current.injectJavaScript(`window.location.href = 'https://myaccount.google.com';`);
+            if (data.is2FAEnabled ) {
+              setModal({...modal, visible: true, type:"2FA_VERIFIED", title:TwoFAVerifiedMessage.title, message:TwoFAVerifiedMessage.message});
             } else {
-              setModal({...modal, visible: true, type:"2FA_CHECK", title:"Login and 2FA Not Verified", message:"Login successful! Two-factor authentication has been verified. \n Click Proceed to generate your app password."});
-              console.log(data.is2FAEnabled, "Off")
+              setModal({...modal, visible: true, type:"2FA_NOT_VERIFIED", title:TwoFANotVerifiedMessage.title, message:TwoFANotVerifiedMessage.message});
           }
-      }
+        }
         break
 
         case "APP_EMAIL":
           handleCredentials(data.email, "EMAIL")
-            console.log(data.email)
         break
 
         case "APP_PASSWORD":
-        
           handleCredentials(data.password, "PASSWORD")
-          setModal({...modal, visible: true,type:"PASSWORD", title:"Password generated", message:"App Password generated successfully. \n Click Proceed to navigate dashboard"});
+          setModal({...modal, visible: true,type:"PASSWORD", title:PasswordMessage.title, message:PasswordMessage.message});
         break
-
-
-
       }
 
-      console.log("Message from WebView:", data);
      
     } catch (error) {
-      console.error("Error parsing message data:", error);
+       ToastAndroid.show('Error parsing message data', ToastAndroid.SHORT);
     }
   };
+
+      useEffect(()=>{
+        const getCred = async ()=>{
+          const isLoggedIn = await login();
+          if(isLoggedIn) {
+            navigation.navigate("Dashboard")
+          }
+        }
+        getCred()
+      },[])
 
   return (
     <View style={styles.container}>
@@ -219,12 +218,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  loader: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: [{ translateX: -25 }, { translateY: -25 }],
-  },
+  
 });
 
 export default Login;

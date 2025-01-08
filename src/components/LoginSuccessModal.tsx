@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Modal, StyleSheet, Text, View, Button } from 'react-native';
 
 const LoginSuccessModal = (
