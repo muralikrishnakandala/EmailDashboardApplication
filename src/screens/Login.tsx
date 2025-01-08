@@ -22,15 +22,22 @@ const Login:FC<Props> = ({navigation}) => {
 
   const handleProceedBtn = (type:string) => {
     resetModalState();
+
+    // Navigate to app password page if Two factor authentication is already enabled
     if (type === '2FA_VERIFIED') {
       if (webViewRef.current) {
         webViewRef.current.injectJavaScript(`window.location.href = 'https://myaccount.google.com/apppasswords';`);
       }
-    } else if (type === '2FA_NOT_VERIFIED') {
+    } 
+    // Guide user to enable two factor authentication
+    else if (type === '2FA_NOT_VERIFIED') {
       if (webViewRef.current) {
         webViewRef.current.injectJavaScript(TwoFANotVerifiedScript);
       }
-    } else if (type === 'PASSWORD') {
+    } 
+    
+    // Navigate to dashboard once app password is generated and click on proceed button in modal
+    else if (type === 'PASSWORD') {
       navigation.navigate('Dashboard');
     }
   }
@@ -40,7 +47,7 @@ const Login:FC<Props> = ({navigation}) => {
     const { url } = newNavState;
  
 
-    
+    // After user Login this condition is executed and navigate to two step verification page
     if (url.includes("myaccount.google.com") && !hasNavigated) {
       if (webViewRef.current) {
         webViewRef.current.injectJavaScript(`
@@ -52,11 +59,13 @@ const Login:FC<Props> = ({navigation}) => {
       }
     } 
     
+    // This is two step verification pag here it is doing two jobs on initial login it is return 2FA is enable or disble, and also if turn on 2FA again this will execute
     else if (url.includes("signinoptions/twosv")) {
       if (webViewRef.current) {
         webViewRef.current.injectJavaScript(`
           (function() {
            
+          // Prevent script execution multiple times
             if (window.hasExecutedScript) return;
             window.hasExecutedScript = true;
 
@@ -70,6 +79,7 @@ const Login:FC<Props> = ({navigation}) => {
                       buttonContainer.style.display = 'block';
                       buttonContainer.style.border = '2px solid #f0ad4e';
 
+                      // Create a ToolTip
                        const tooltip = document.createElement('div');
 
                         tooltip.textContent = "Click here to enable 2-Step Verification";
@@ -84,6 +94,7 @@ const Login:FC<Props> = ({navigation}) => {
 
                         buttonContainer.appendChild(tooltip);          
 
+                        //After % seconds remove tooltip and border
                       setTimeout(() => {
 
                       buttonContainer.style.border = 'none';
@@ -92,6 +103,7 @@ const Login:FC<Props> = ({navigation}) => {
                       }, 5000); 
                     }
             
+                     // Send the status back to React Native
                     window.ReactNativeWebView.postMessage(JSON.stringify({
                       type: '2FA_CHECK',
                       is2FAPage: is2FAPage,
@@ -110,6 +122,7 @@ const Login:FC<Props> = ({navigation}) => {
                   })();
           
 
+                  // this function is execute when user is enable the 2 step verification
               (function(){
                 const twoFaButtonEle = document.querySelector('.UywwFc-LgbsSe.UywwFc-LgbsSe-OWXEXe-dgl2Hf.wMI9H')
                 
@@ -118,6 +131,7 @@ const Login:FC<Props> = ({navigation}) => {
                 
                               if(twoFaButtonEle.textContent === "Done"){
                             
+                               // Send the status back to React Native
                                   window.ReactNativeWebView.postMessage(JSON.stringify({
                                       type: '2FA_CHECK',
                                       is2FAPage: true,
@@ -133,18 +147,21 @@ const Login:FC<Props> = ({navigation}) => {
 
     } 
     
+    // If user enable 2FA this condition is execute to create app password
     else if(url.includes("/apppasswords")) {
       if(webViewRef.current){
         webViewRef.current.injectJavaScript(AppPasswordScript)
       }
     }
 
+    // This condition execute and get the logged in user email address
     else if (url.includes("/signin") && url.includes("/challenge")) {
       if (webViewRef.current) {
         webViewRef.current.injectJavaScript(GetEmailAddressScript);
       }
     }
 
+    // This Condition is guide the user to enable 2FA from security page
     else if(url.includes("/security")) {
       if(webViewRef.current) {
         setIntial2FAVerification(false)
@@ -157,6 +174,8 @@ const Login:FC<Props> = ({navigation}) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);    
       switch(data.type) {
+
+        // After User LoggedIn. this Case is execute and check whether user has enable two-factor authentication or not
         case "2FA_CHECK":
           if(webViewRef.current && data.isForInitialVerification){
             webViewRef.current.injectJavaScript(`window.location.href = 'https://myaccount.google.com';`);

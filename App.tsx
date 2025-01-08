@@ -20,7 +20,7 @@ function App() {
     <GestureHandlerRootView>
       <NavigationContainer>
     <AuthProvider>
-        <Stack.Navigator screenOptions={{headerTintColor:"#051f20", headerStyle:{backgroundColor:"#A7C8A9"}, headerTitleStyle:{fontWeight:"bold"}}}>
+        <Stack.Navigator screenOptions={{headerBackVisible:false,headerTintColor:"#051f20", headerStyle:{backgroundColor:"#A7C8A9"}, headerTitleStyle:{fontWeight:"bold"}}}>
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Dashboard" component={Dashboard} />
         </Stack.Navigator>

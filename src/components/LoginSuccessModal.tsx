@@ -11,7 +11,6 @@ const LoginSuccessModal = (
         transparent={true}
         visible={visible}
         onRequestClose={handleModalVisibility}
-        style={{}}
       >
            
         <View style={styles.centeredView}>

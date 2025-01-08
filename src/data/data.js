@@ -6,6 +6,7 @@ export const TwoFANotVerifiedScript = `
 
                   if (securityTab) {
 
+                  // Create a border to higlight security tab
                     securityTab.style.display = 'block';
                     securityTab.style.border = '2px solid #f0ad4e';
 
@@ -32,7 +33,7 @@ export const TwoFANotVerifiedScript = `
                       }, 5000); 
                     }     
 
-      
+            //Scroll Nav bar to left
                     const navbar = document.querySelector('.mWFX3e');
                     if (navbar) {
                       navbar.scrollLeft = 200;
@@ -75,6 +76,7 @@ export const AppPasswordScript = `
                     }
                 }
 
+                // Capture the Generated App Password and return the response to react native
               function captureAppPassword() {
                   const modalElement = document.querySelector('.XfTrZ')
                       if (modalElement && modalElement.style.display !== 'none') { 
@@ -103,7 +105,8 @@ export const GetEmailAddressScript = `
           })();
         `
 export const EnableTwoFAGuideScript = `
-          
+        
+  // After landing in security page it scroll up and higlight the two factor authentication option
       function handleTwoFAButton() {
       const TwoFAVerificationButton = document.querySelector('a[data-rid="403"][data-nav-type="5"]')
 

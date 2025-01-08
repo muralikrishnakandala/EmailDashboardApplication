@@ -18,52 +18,69 @@ const Dasboard = () => {
   const [loading, setLoading] = useState(false);
 
   const getEmailsCount = () => {
-    setLoading(true);
-    let responseBuffer = '';
+    setLoading(true)
+    let responseBuffer = ''
+  
+    // Create a secure connection to the IMAP server
     const client = TcpSocket.connectTLS(
       {
-        host: 'imap.gmail.com',
-        port: 993,
-        tls: true,
+        host: 'imap.gmail.com', // Gmail IMAP server hostname
+        port: 993, // Port for secure IMAP (TLS/SSL)
+        tls: true, // Use TLS for a secure connection
       },
       () => {
-        console.log(email, password, "rrr")
-        if(email && password) {
-          client.write(`A1 LOGIN ${email} ${password}\r\n`)
+        // Callback executed when the connection is successfully established
+        if (email && password) {
+          // Send the LOGIN command with email and password
+          client.write(`A1 LOGIN ${email} ${password}\r\n`);
         } else {
+         
           ToastAndroid.show('Please try again', ToastAndroid.SHORT);
-          client.destroy()
+          client.destroy();
         }
       },
     );
-
+  
+    // Handle incoming data from the IMAP server
     client.on('data', data => {
-      const decodedData = data.toString('utf-8');
+      const decodedData = data.toString('utf-8'); 
       responseBuffer += decodedData;
-
+  
+      // Check for the successful login response
       if (responseBuffer.includes('A1 OK')) {
+        // Send the SELECT command to choose the INBOX folder
         client.write('A2 SELECT INBOX\r\n');
-        responseBuffer = '';
-      } else if (responseBuffer.includes('A2 OK')) {
+        responseBuffer = ''; // Reset the buffer
+      } 
+
+      // Check for the successful response after selecting the INBOX
+      else if (responseBuffer.includes('A2 OK')) {
+        // Send the STATUS command to fetch the number of messages in the INBOX
         client.write('A3 STATUS INBOX (MESSAGES)\r\n');
-        responseBuffer = '';
-      } else if (responseBuffer.includes('MESSAGES')) {
+        responseBuffer = ''; // Reset the buffer
+      } 
+
+      // Check for the response containing the number of messages
+      else if (responseBuffer.includes('MESSAGES')) {
+        // Use regex to extract the number of messages from the response
         const match = responseBuffer.match(/MESSAGES (\d+)/);
         if (match) {
           setEmailsCount(parseInt(match[1], 10));
         }
         setLoading(false);
-        client.write('A4 LOGOUT\r\n');
-        client.destroy();
+        client.write('A4 LOGOUT\r\n'); // Send the LOGOUT command
+        client.destroy(); // Close the connection
       }
     });
-
+  
+    // Handle connection errors
     client.on('error', error => {
       setLoading(false);
       Alert.alert('Error', 'Failed to connect to the email server.' + error);
       client.destroy();
     });
-
+  
+    // Handle connection closure
     client.on('close', () => {
       setLoading(false);
       ToastAndroid.show('Connection closed', ToastAndroid.SHORT);
