@@ -19,6 +19,7 @@ This is a React Native application that allows users to view their email count b
 - React Native Cookies
 - React Native WebView
 - React Native Carousel
+- React Native Tcp Socket
 - React Native Reanimated
 - React Native Gesture Handler
 - React Context for Authentication
